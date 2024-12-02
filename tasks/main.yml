@@ -1,0 +1,177 @@
+# VS Code including extensions
+---
+- name: Set up keys ubuntu
+  become: true
+  when:
+    - ansible_distribution == 'Ubuntu'
+    - "'code' not in ansible_facts.packages"
+    - not is_wsl
+  block:
+    - name: Add Microsoft Apt signing key, will not download if present
+      ansible.builtin.apt_key:
+        id: BE1229CF
+        url: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+
+    - name: Add Microsoft Visual Studio Code repository into sources list
+      ansible.builtin.apt_repository:
+        repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
+        state: present
+
+- name: Setup keys on fedora
+  become: true
+  when: ansible_distribution == 'Fedora'
+  block:
+    - name: Add signing key
+      ansible.builtin.rpm_key:
+        key: https://packages.microsoft.com/keys/microsoft.asc
+        state: present
+
+    - name: Copy vscode for yum in fedora
+      ansible.builtin.copy:
+        src: files/yum-vscode.repo
+        dest: "/etc/yum.repos.d/vscode.repo"
+        mode: '0644'
+      changed_when: false
+
+- name: Install VS code
+  become: true
+  when:
+    - not is_wsl
+    - ansible_facts['os_family'] != 'Darwin'
+  block:
+    - name: Install code
+      ansible.builtin.package:
+        state: present
+        pkg:
+          - code
+        update_cache: true
+      when: "'code' not in ansible_facts.packages"
+
+- name: Install VS code
+  become: false
+  when:
+    - not is_wsl
+    - ansible_facts['os_family'] == 'Darwin'
+  block:
+    - name: Install code
+      community.general.homebrew_cask:
+        name: visual-studio-code
+        state: present
+
+- name: Install VSCode extensions
+  block:
+    - name: List Microsoft Visual Studio installed extensions
+      ansible.builtin.shell: |
+        set -o pipefail
+        code --list-extensions | base64
+      args:
+        executable: /bin/bash
+      register: common_code_extensions
+      check_mode: false  # run even in --check mode (dry-run)
+      changed_when: false
+      become: false
+
+    - name: Decode the base64-encoded extensions list
+      ansible.builtin.set_fact:
+        common_code_extensions_decoded: "{{ common_code_extensions.stdout | b64decode }}"
+
+    - name: Convert decoded extensions to a list
+      ansible.builtin.set_fact:
+        common_code_extensions_list: "{{ common_code_extensions_decoded.split('\n') | reject('equalto', '') | list }}"
+
+    - name: Install Microsoft Visual Studio code extensions
+      ansible.builtin.command:
+        cmd: code --install-extension {{ item }}
+      when: not (item in common_code_extensions_list)
+      with_items:
+        - charliermarsh.ruff  # python formatter and linter
+        # - cschlosser.doxdocgen
+        - formulahendry.code-runner
+        # - jeff-hykin.better-cpp-syntax
+        - ms-azuretools.vscode-docker
+        # - ms-vscode.cmake-tools
+        # - ms-vscode.cpptools
+        # - ms-vscode.cpptools-extension-pack
+        # - ms-vscode.cpptools-themes
+        - ms-python.debugpy  # enables python debugger
+        - ms-python.python
+        # - ms-vscode-remote.remote-containers # fails on arch OSS
+        # - twxs.cmake
+        - vscodevim.vim
+        - yzhang.markdown-all-in-one
+      become: false
+      changed_when: false
+
+- name: Set keymaps, settings on linux
+  when:
+    - not is_wsl
+    - ansible_facts['os_family'] != 'Darwin'
+  block:
+    - name: Set fact for code dir on ubuntu and fedora
+      ansible.builtin.set_fact:
+        common_code_dir: "Code"
+      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Fedora'
+
+    - name: Set fact for code dir on arch
+      ansible.builtin.set_fact:
+        common_code_dir: "Code - OSS"
+      when: ansible_distribution == 'Archlinux'
+
+    - name: Set fact for code dir on arch
+      ansible.builtin.set_fact:
+        settings_dest_path: "/home/{{ ansible_env.USER }}/.config/{{ common_code_dir }}/User/settings.json"
+
+    - name: Set fact for code dir on arch
+      ansible.builtin.set_fact:
+        keybindings_dest_path: "/home/{{ ansible_env.USER }}/.config/{{ common_code_dir }}/User/keybindings.json"
+
+- name: Set keymaps, settings on Mac
+  when:
+    - not is_wsl
+    - ansible_facts['os_family'] == 'Darwin'
+  block:
+    - name: Set fact for settings file path on macOS
+      ansible.builtin.set_fact:
+        settings_dest_path: "~/Library/Application Support/Code/User/settings.json"
+
+    - name: Set fact for keybindings file path on macOS
+      ansible.builtin.set_fact:
+        keybindings_dest_path: "~/Library/Application Support/Code/User/keybindings.json"
+
+    - name: Ensure settings directory exists
+      ansible.builtin.file:
+        path: "~/Library/Application Support/Code/User"
+        state: directory
+        mode: '0755'
+
+- name: Set keymaps, settings on WSL
+  when: is_wsl
+  block:
+    - name: Execute command to get Windows username
+      ansible.builtin.command:
+        cmd: cmd.exe /c "echo %USERNAME%"
+      register: windows_username
+      changed_when: false
+
+    - name: Set fact for code dir on arch
+      ansible.builtin.set_fact:
+        settings_dest_path: "/mnt/c/Users/{{ windows_username.stdout }}/AppData/Roaming/Code/User/settings.json"
+
+    - name: Set fact for code dir on arch
+      ansible.builtin.set_fact:
+        keybindings_dest_path: "/mnt/c/Users/{{ windows_username.stdout }}/AppData/Roaming/Code/User/keybindings.json"
+
+- name: Copy vscode_settings.json to VS Code
+  ansible.builtin.copy:
+    src: files/vscode_settings.json
+    dest: "{{ settings_dest_path }}"
+    mode: '0644'
+  changed_when: false
+
+- name: Copy keybindings in VS Code
+  ansible.builtin.copy:
+    src: files/vscode_keybindings.json
+    dest: "{{ keybindings_dest_path }}"
+    mode: '0644'
+  changed_when: false

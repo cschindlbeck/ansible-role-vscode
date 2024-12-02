@@ -1,0 +1,35 @@
+{
+    "files.exclude": {
+        "**/build": true
+    },
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/.docker/**": true,
+        "**/ansible/files/**": true,
+        "**/build/**": true,
+        "**/logs/**": true,
+        "**/uros_ws/emily_uc/.pio/**": true,
+        "**/node_modules/*/**": true
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}/src",
+    "editor.formatOnSave": true,
+    "editor.rulers": [
+        120
+    ],
+    "editor.quickSuggestions": {
+        "other": "on",
+        "comments": "on",
+        "strings": "on"
+    },
+    "[xml]": {
+        "editor.detectIndentation": false,
+        "editor.autoClosingBrackets": "never",
+        "editor.tabSize": 2,
+        "files.trimFinalNewlines": true
+    },
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "charliermarsh.ruff"
+    }
+}
