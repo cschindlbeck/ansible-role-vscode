@@ -3,7 +3,7 @@
 - name: Set up keys ubuntu
   become: true
   when:
-    - ansible_distribution == 'Ubuntu'
+    - ansible_facts['distribution'] == 'Ubuntu'
     - "'code' not in ansible_facts.packages"
     - not is_wsl
   block:
@@ -20,7 +20,7 @@
 
 - name: Setup keys on fedora
   become: true
-  when: ansible_distribution == 'Fedora'
+  when: ansible_facts['distribution'] == 'Fedora'
   block:
     - name: Add signing key
       ansible.builtin.rpm_key:
@@ -111,12 +111,12 @@
     - name: Set fact for code dir on ubuntu and fedora
       ansible.builtin.set_fact:
         common_code_dir: "Code"
-      when: ansible_distribution == 'Ubuntu' or ansible_distribution == 'Fedora'
+      when: ansible_facts['distribution'] == 'Ubuntu' or ansible_facts['distribution'] == 'Fedora'
 
     - name: Set fact for code dir on arch
       ansible.builtin.set_fact:
         common_code_dir: "Code - OSS"
-      when: ansible_distribution == 'Archlinux'
+      when: ansible_facts['distribution'] == 'Archlinux'
 
     - name: Set fact for code dir on arch
       ansible.builtin.set_fact:
