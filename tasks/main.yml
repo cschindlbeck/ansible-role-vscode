@@ -31,7 +31,7 @@
       ansible.builtin.copy:
         src: files/yum-vscode.repo
         dest: "/etc/yum.repos.d/vscode.repo"
-        mode: '0644'
+        mode: "0644"
       changed_when: false
 
 - name: Install VS code
@@ -68,7 +68,7 @@
       args:
         executable: /bin/bash
       register: common_code_extensions
-      check_mode: false  # run even in --check mode (dry-run)
+      check_mode: false # run even in --check mode (dry-run)
       changed_when: false
       become: false
 
@@ -85,7 +85,7 @@
         cmd: code --install-extension {{ item }}
       when: not (item in common_code_extensions_list)
       loop:
-        - charliermarsh.ruff  # python formatter and linter
+        - charliermarsh.ruff # python formatter and linter
         # - cschlosser.doxdocgen
         - formulahendry.code-runner
         # - jeff-hykin.better-cpp-syntax
@@ -94,7 +94,7 @@
         # - ms-vscode.cpptools
         # - ms-vscode.cpptools-extension-pack
         # - ms-vscode.cpptools-themes
-        - ms-python.debugpy  # enables python debugger
+        - ms-python.debugpy # enables python debugger
         - ms-python.python
         # - ms-vscode-remote.remote-containers # fails on arch OSS
         # - twxs.cmake
@@ -124,7 +124,7 @@
 
     - name: Set fact for code dir on arch
       ansible.builtin.set_fact:
-        keybindings_dest_path: >-
+        keybindings_dest_path: >
           /home/{{ ansible_facts['env']['USER'] }}/.config/{{ common_code_dir }}/User/keybindings.json
 
 - name: Set keymaps, settings on Mac
@@ -144,7 +144,7 @@
       ansible.builtin.file:
         path: "~/Library/Application Support/Code/User"
         state: directory
-        mode: '0755'
+        mode: "0755"
 
 - name: Set keymaps, settings on WSL
   when: is_wsl
@@ -167,12 +167,12 @@
   ansible.builtin.copy:
     src: files/vscode_settings.json
     dest: "{{ settings_dest_path }}"
-    mode: '0644'
+    mode: "0644"
   changed_when: false
 
 - name: Copy keybindings in VS Code
   ansible.builtin.copy:
     src: files/vscode_keybindings.json
     dest: "{{ keybindings_dest_path }}"
-    mode: '0644'
+    mode: "0644"
   changed_when: false
