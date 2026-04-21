@@ -120,12 +120,11 @@
 
     - name: Set fact for code dir on arch
       ansible.builtin.set_fact:
-        settings_dest_path: "/home/{{ ansible_facts['env']['USER'] }}/.config/{{ common_code_dir }}/User/settings.json"
+        settings_dest_path: "$HOME/.config/{{ common_code_dir }}/User/settings.json"
 
     - name: Set fact for code dir on arch
       ansible.builtin.set_fact:
-        keybindings_dest_path: >
-          /home/{{ ansible_facts['env']['USER'] }}/.config/{{ common_code_dir }}/User/keybindings.json
+        keybindings_dest_path: "$HOME/.config/{{ common_code_dir }}/User/keybindings.json"
 
 - name: Set keymaps, settings on Mac
   when:
