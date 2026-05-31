@@ -7,15 +7,15 @@
     - "'code' not in ansible_facts.packages"
     - not is_wsl
   block:
-    - name: Add Microsoft Apt signing key, will not download if present
-      ansible.builtin.apt_key:
-        id: BE1229CF
-        url: https://packages.microsoft.com/keys/microsoft.asc
-        state: present
-
-    - name: Add Microsoft Visual Studio Code repository into sources list
-      ansible.builtin.apt_repository:
-        repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
+    - name: Add Microsoft Visual Studio Code repository
+      ansible.builtin.deb822_repository:
+        name: vscode
+        types: deb
+        uris: https://packages.microsoft.com/repos/vscode
+        suites: stable
+        components: main
+        architectures: amd64
+        signed_by: https://packages.microsoft.com/keys/microsoft.asc
         state: present
 
 - name: Setup keys on fedora
